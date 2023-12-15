@@ -13,5 +13,7 @@ module.exports = (app) => {
     router.post("/resetPassword", loginController.resetPassword)
     router.post("/razorpayPaymentCapture", paymentController.payment)
     router.get("/getCourseMapping", courseMappingController.getCourseMapping)
+    router.post("/paymentVerification", paymentController.paymentVerification)
+
     app.use("/api/v1", router);
 };

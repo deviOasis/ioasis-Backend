@@ -35,4 +35,25 @@ exports.payment = async (req, res) => {
     }
 }
 
+exports.paymentVerification = async (req, res) => {
+    try {
+        const secret = 'stslBee/nIC3VI1w'
+        console.log(req.body);
+        const crypto = require('crypto');
+        const shasum = crypto.createHmac('sha256', secret)
+        shasum.update(JSON.stringify(req.body))
+        const digest = shasum.digest('hex')
+        console.log(digest, req.headers['x-razorpay-signature'])
+        if (digest === req.headers['x-razorpay-signature']) {
+            console.log('request is legit')
+        } else {
+            console.log('request is not legit')
+        }
+        res.send("OK");
+
+
+    } catch (error) {
+
+    }
+}
 
