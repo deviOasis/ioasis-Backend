@@ -27,4 +27,8 @@ db.courseMappingModel = require('../src/Models/courseMappingModel')(
     sequelize,
     Sequelize
 );
+db.paymentsModel = require('../src/Models/paymentsModel')(
+    sequelize,
+    Sequelize
+);
 module.exports = db;

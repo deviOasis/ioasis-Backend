@@ -3,6 +3,7 @@ module.exports = (app) => {
     const loginController = require("../Controllers/loginControllers.js")
     const paymentController = require("../Controllers/paymentControllers.js")
     const courseMappingController = require("../Controllers/mappingControllers.js")
+    const userProfileController = require("../Controllers/userProfileControllers.js")
     const jwtAuth = require("../../Services/jwt");
     var router = require("express").Router();
 
@@ -13,6 +14,7 @@ module.exports = (app) => {
     router.post("/resetPassword", loginController.resetPassword)
     router.post("/razorpayPaymentCapture", paymentController.payment)
     router.get("/getCourseMapping", courseMappingController.getCourseMapping)
+    router.get("/getuserProfile", userProfileController.getUserProfile)
     router.post("/paymentVerification", paymentController.paymentVerification)
 
     app.use("/api/v1", router);

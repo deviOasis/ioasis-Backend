@@ -1,3 +1,6 @@
+const db = require("../../Config/connection");
+const paymentsModel = db.paymentsModel;
+const usersModel = db.usersModel;
 const Razorpay = require('razorpay');
 const shortid = require("shortid")
 const razorpay = new Razorpay({
@@ -6,34 +9,69 @@ const razorpay = new Razorpay({
 });
 exports.payment = async (req, res) => {
     try {
-        const courseIds = req.body.courseIds;
-        let amount = 0;
-        const currency = 'INR';
-        const idsLength = courseIds.length;
-        for (let i = 0; i < idsLength; i++) {
-            amount += 100;
+        const { userId, courseIds, isDemo } = req.body;
+        if (isDemo) {
+            const [updatedRowsCount] = await usersModel.update(
+                { demoTimestamp: new Date() },
+                { where: { id: userId } }
+            );
+
+            if (updatedRowsCount > 0) {
+                res.status(200).json({
+                    message: 'Demo started successfully',
+                    userId: userId,
+                });
+            } else {
+                res.status(500).json({
+                    error: 'Failed to start demo. User not found or no update occurred.',
+                });
+            }
+        } else {
+            const currency = 'INR';
+
+            // Calculate the total amount based on the number of courses
+            const amount = courseIds.reduce((totalAmount, courseId) => totalAmount + 100, 0);
+
+            // Log input data for debugging
+            console.log('Course IDs:', courseIds);
+            console.log('Total Amount:', amount);
+
+            const payment_capture = 1;
+
+            // Create a Razorpay order
+            const options = {
+                amount: amount * 100, // Razorpay expects amount in paise
+                currency: currency,
+                receipt: shortid.generate(),
+                payment_capture: payment_capture,
+            };
+
+            const order = await razorpay.orders.create(options);
+            console.log('Razorpay Order:', order);
+
+            // Create a new payment entry in the database
+            const newPayment = {
+                user_id: userId,
+                order_id: order.id,
+                status: order.status,
+                amount: amount,
+                currency: currency,
+                receipt: order.receipt,
+            };
+
+            const createdPayment = await paymentsModel.create(newPayment);
+
+            res.status(200).json({
+                message: 'Payment processed successfully',
+                orderId: order.id,
+                amount: amount,
+            });
         }
-        console.log(courseIds);
-        console.log(amount);
-        const payment_capture = 1;
-        const options = {
-            amount: amount * 100, // Razorpay expects amount in paise
-            currency: currency,
-            receipt: shortid.generate(),
-            payment_capture: payment_capture,
-        }
-        const order = await razorpay.orders.create(options);
-        console.log(order);
-        res.status(200).json({
-            message: 'Payment processed successfully',
-            orderid: order.id,
-            amount: amount,
-        })
     } catch (error) {
         console.error('Error processing payment:', error);
         res.status(500).json({ error: 'Payment processing failed' });
     }
-}
+};
 
 exports.paymentVerification = async (req, res) => {
     try {

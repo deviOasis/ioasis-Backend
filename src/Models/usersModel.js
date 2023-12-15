@@ -162,6 +162,10 @@ module.exports = (sequelize, Sequelize) => {
             defaultValue: Sequelize.NOW,
             onUpdate: Sequelize.NOW,
         },
+        demoTimestamp: {
+            type: Sequelize.DATE, // Assuming you want to use Sequelize's DATE data type for datetime
+            allowNull: true, // Allow NULL values for the demoTimestamp column
+        },
     }, {
         tableName: 'users',
         timestamps: false, // Set to true if you want Sequelize to manage timestamps
