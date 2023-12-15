@@ -1,6 +1,6 @@
 module.exports = (app) => {
     const testController = require("../Controllers/testController.js")
-    const loginController = require("../Controllers/loginControllers")
+    const loginController = require("../Controllers/loginControllers.js")
     const paymentController = require("../Controllers/paymentControllers.js")
     const courseMappingController = require("../Controllers/mappingControllers.js")
     const jwtAuth = require("../../Services/jwt");

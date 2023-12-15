@@ -1,4 +1,4 @@
-const db = require("../../config/connection");
+const db = require("../../Config/connection");
 const usersModel = db.usersModel;
 const axios = require("axios");
 const bcrypt = require("bcrypt");

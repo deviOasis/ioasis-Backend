@@ -1,4 +1,4 @@
-const db = require("../../config/connection");
+const db = require("../../Config/connection");
 const courseMappingModel = db.courseMappingModel
 
 exports.getCourseMapping = async (req, res) => {
