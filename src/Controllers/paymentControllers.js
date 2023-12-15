@@ -49,7 +49,8 @@ exports.paymentVerification = async (req, res) => {
         } else {
             console.log('request is not legit')
         }
-        res.send("OK");
+        res.json({ status: "ok" });
+        // res.status(200);
 
 
     } catch (error) {
