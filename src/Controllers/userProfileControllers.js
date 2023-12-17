@@ -38,7 +38,12 @@ exports.getUserProfile = async (req, res) => {
             where: { id: id, is_deleted: 0 },
             attributes: ['id', 'username', 'email_address', 'full_name', 'bio'],
         });
-
+        if (!userProfile) {
+            return res.status(404).json({
+                status: false,
+                message: 'User not found',
+            });
+        }
         res.status(200).json({
             status: true,
             message: 'User Profile fetched successfully',
