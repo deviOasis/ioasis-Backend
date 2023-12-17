@@ -35,7 +35,7 @@ exports.getUserProfile = async (req, res) => {
         }
 
         const userProfile = await usersModel.findOne({
-            where: { id },
+            where: { id: id, is_deleted: 0 },
             attributes: ['id', 'username', 'email_address', 'full_name', 'bio'],
         });
 
