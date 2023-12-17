@@ -21,18 +21,16 @@ exports.sendOtp = async (req, res) => {
 
         // Save username and phone number in the users table
         await usersModel.create({
-            name: name,
+            full_name: name,
             phone_number: mobile,
         });
 
         const msgString = encodeURIComponent(
-            "<#> ##OTP## is your ioasis Login OTP. C/YgRNjOFYM"
+            "<#> ##OTP## is your Hans Matrimony Login OTP. C/YgRNjOFYM"
         );
-        //url need to be updated
-        const options = {
+        var options = {
             method: "GET",
-            url: `https://api.msg91.com/api/sendotp.php?authkey=${MSG_AUTH_KEY}&mobiles=${mobile}&message=Your%20OTP%20is%20##OTP##.%20Do%20not%20share%20it%20with%20anyone.&sender=YOUR_SENDER_ID&otp=&DLT_TE_ID=YOUR_DLT_TE_ID`,
-
+            url: `https://api.msg91.com/api/sendotp.php?authkey=${MSG_AUTH_KEY}&mobiles=${mobile}&message=${msgString}&sender=INHANS&otp=&DLT_TE_ID=1207162341543384380`,
         };
 
         // Use axios for asynchronous requests
