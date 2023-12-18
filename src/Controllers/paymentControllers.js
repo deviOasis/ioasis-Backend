@@ -90,9 +90,10 @@ exports.paymentVerification = async (req, res) => {
         // console.log(digest, req.headers['x-razorpay-signature'])
         if (digest === req.headers['x-razorpay-signature']) {
             console.log('request is legit')
+            const phoneNumberWithoutPlus = req.body.payload.payment.entity.contact.replace('+', '');
             const userId = await usersModel.findOne({
                 where: {
-                    phone_number: req.body.payload.payment.entity.contact
+                    phone_number: phoneNumberWithoutPlus
                 },
                 attributes: ['id']
             })
