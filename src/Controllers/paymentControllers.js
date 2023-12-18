@@ -19,6 +19,7 @@ exports.payment = async (req, res) => {
             if (updatedRowsCount > 0) {
                 res.status(200).json({
                     message: 'Demo started successfully',
+                    order_id: '',
                     userId: userId,
                 });
             } else {
