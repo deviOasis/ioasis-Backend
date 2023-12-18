@@ -2,6 +2,7 @@ const db = require("../../Config/connection");
 const paymentsModel = db.paymentsModel;
 const usersModel = db.usersModel;
 const Razorpay = require('razorpay');
+const { where } = require("sequelize");
 const shortid = require("shortid")
 const razorpay = new Razorpay({
     key_id: 'rzp_test_KPDVnbAEecMRkj',
@@ -77,14 +78,26 @@ exports.payment = async (req, res) => {
 exports.paymentVerification = async (req, res) => {
     try {
         const secret = 'stslBee/nIC3VI1w'
-        console.log(req.body.payload.payment.entity);
+        console.log("aafter this");
+        console.log(req.body.payload.payment.entity.status);
+        console.log(req.body.payload.payment.entity.contact);
         const crypto = require('crypto');
         const shasum = crypto.createHmac('sha256', secret)
         shasum.update(JSON.stringify(req.body))
         const digest = shasum.digest('hex')
-        console.log(digest, req.headers['x-razorpay-signature'])
+        // console.log(digest, req.headers['x-razorpay-signature'])
         if (digest === req.headers['x-razorpay-signature']) {
             console.log('request is legit')
+            // const update = await paymentsModel.update({
+            //     status: req.body.payload.payment.entity.status,
+            //     method: req.body.payload.payment.entity.method,
+            //     transaction_id: req.body.payload.payment.entity.id,
+            // },
+            //     {
+            //         where: {
+
+            //         }
+            //     })
         } else {
             console.log('request is not legit')
         }
