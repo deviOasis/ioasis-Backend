@@ -77,7 +77,7 @@ exports.payment = async (req, res) => {
 exports.paymentVerification = async (req, res) => {
     try {
         const secret = 'stslBee/nIC3VI1w'
-        console.log(req.body);
+        console.log(req.body.payload.payment.entity);
         const crypto = require('crypto');
         const shasum = crypto.createHmac('sha256', secret)
         shasum.update(JSON.stringify(req.body))

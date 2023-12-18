@@ -148,7 +148,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { userName, password } = req.body;
-        console.log(req.body);
+        // console.log(req.body);
         // Simple validation checks
         if (!userName || !password) {
             return res.status(400).json({
@@ -187,7 +187,7 @@ exports.login = async (req, res) => {
 
         // Generate and return a JWT token for authentication
         const token = await jwt.generatetoken(user.id);
-        console.log(token);
+        // console.log(token);
         return res.status(200).json({
             status: true,
             message: "Login successful",
@@ -278,7 +278,7 @@ exports.resetPassword = async (req, res) => {
                     });
                 } else {
                     let processedData = JSON.parse(response.body);
-                    console.log(response.body);
+                    // console.log(response.body);
 
                     if (processedData.type == "error") {
                         return res.status(400).json({
