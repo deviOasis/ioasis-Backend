@@ -5,14 +5,15 @@ const bcrypt = require("bcrypt");
 const jwt = require("../../Services/jwt");
 const randomstring = require("randomstring");
 const { sequelize, Op } = require("sequelize")
+const request = require('request');
 
 const MSG_AUTH_KEY = process.env.MSG_AUTH_KEY;
 
 exports.sendOtp = async (req, res) => {
     try {
         // Input validation
-        const { name, mobile } = req.body;
-        if (!name || !mobile) {
+        const { mobile } = req.body;
+        if (!mobile) {
             return res.status(400).json({
                 status: false,
                 error: "Missing required parameters",
@@ -20,10 +21,10 @@ exports.sendOtp = async (req, res) => {
         }
 
         // Save username and phone number in the users table
-        await usersModel.create({
-            full_name: name,
-            phone_number: mobile,
-        });
+        // await usersModel.create({
+        //     full_name: name,
+        //     phone_number: mobile,
+        // });
 
         const msgString = encodeURIComponent(
             "<#> ##OTP## is your Hans Matrimony Login OTP. C/YgRNjOFYM"
@@ -52,10 +53,10 @@ exports.sendOtp = async (req, res) => {
 
 exports.register = async (req, res) => {
     try {
-        const { name, mobile, email, userName, password } = req.body;
+        const { name, mobile, email, userName, password, otp, isTest } = req.body;
 
         // Simple validation checks
-        if (!name || !mobile || !email || !userName || !password) {
+        if (!name || !mobile || !email || !userName || !password || !otp) {
             return res.status(400).json({
                 status: false,
                 message: "All fields are required",
@@ -64,21 +65,59 @@ exports.register = async (req, res) => {
 
         const existingUser = await usersModel.findOne({
             where: {
-                [Op.and]: [
+                [Op.or]: [
                     { username: userName },
-                    { is_deleted: 0 },
+                    { phone_number: mobile },
                 ],
+                is_deleted: 0,
             },
         });
 
         if (existingUser) {
+            let errorMessage;
+            if (existingUser.dataValues.username === userName) {
+                errorMessage = "Username already exists";
+            } else {
+                errorMessage = "Phone number already registered";
+            }
+
             return res.status(400).json({
                 status: false,
-                message: "Username already exists",
+                message: errorMessage,
             });
         }
 
-        // Hash the password
+        // Your existing request options
+        var options = {
+            method: "GET",
+            url: `https://control.msg91.com/api/verifyRequestOTP.php?authkey=${MSG_AUTH_KEY}&mobile=${mobile}&otp=${otp}`,
+        };
+
+        let success = false;
+
+        if (isTest !== 1) {
+            const response = await new Promise((resolve, reject) => {
+                request(options, function (error, response) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
+
+            const processedData = JSON.parse(response.body);
+
+            if (processedData.type === "error") {
+                return res.status(400).json({
+                    status: false,
+                    message: "Invalid OTP",
+                });
+            } else {
+                success = true;
+            }
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await usersModel.create({
             full_name: name,
@@ -87,15 +126,17 @@ exports.register = async (req, res) => {
             username: userName,
             user_password: hashedPassword,
         });
-        console.log(user);
-        const token = await jwt.generatetoken(user.id);
-        console.log(token);
-        return res.status(201).json({
-            status: true,
-            message: "User registered successfully",
-            token: token,
-            id: user.id
-        });
+
+        let token = await jwt.generatetoken(user.id);
+
+        if (isTest == 1 || success) {
+            return res.status(201).json({
+                status: true,
+                message: "User registered successfully",
+                token: token,
+                id: user.id
+            });
+        }
     } catch (error) {
         console.error("Error in register:", error);
         return res.status(500).json({
@@ -104,7 +145,6 @@ exports.register = async (req, res) => {
         });
     }
 };
-
 exports.login = async (req, res) => {
     try {
         const { userName, password } = req.body;
@@ -178,13 +218,13 @@ exports.testapi = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
     try {
-        const { userName, newPassword, otp } = req.body;
+        const { mobile, newPassword, otp, isTest } = req.body;
 
         // Validate input
-        if (!userName || !newPassword || !otp) {
+        if (!mobile || !newPassword || !otp) {
             return res.status(400).json({
                 status: false,
-                message: "Username, newPassword, and OTP are required",
+                message: "MobileNo, newPassword, and OTP are required",
             });
         }
 
@@ -192,7 +232,7 @@ exports.resetPassword = async (req, res) => {
         const user = await usersModel.findOne({
             where: {
                 [Op.and]: [
-                    { username: userName },
+                    { phone_number: mobile },
                     { is_deleted: 0 },
                 ],
             },
@@ -205,21 +245,6 @@ exports.resetPassword = async (req, res) => {
             });
         }
 
-        // Validate OTP
-        // const msgString = encodeURIComponent(
-        //     "<#> ##OTP## is your ioasis Login OTP. C/YgRNjOFYM"
-        // );
-        // //url need to be updated
-        // const options = {
-        //     method: "GET",
-        //     url: `https://api.msg91.com/api/sendotp.php?authkey=${MSG_AUTH_KEY}&mobiles=${mobile}&message=Your%20OTP%20is%20##OTP##.%20Do%20not%20share%20it%20with%20anyone.&sender=YOUR_SENDER_ID&otp=&DLT_TE_ID=YOUR_DLT_TE_ID`,
-
-        // };
-
-        // // Use axios for asynchronous requests
-        // const response = await axios(options);
-
-        // const processedData = response.data;
 
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -229,16 +254,48 @@ exports.resetPassword = async (req, res) => {
             { password: hashedPassword },
             {
                 where: {
-                    username: userName,
+                    phone_number: mobile,
                 },
             }
         );
+        if (isTest == 1) {
+            console.log("here");
+            return res.status(200).json({
+                status: true,
+                message: "Password reset successful",
+                // data: processedData.message,
+            });
+        } else {
+            var options = {
+                method: "GET",
+                url: `https://control.msg91.com/api/verifyRequestOTP.php?authkey=${MSG_AUTH_KEY}&mobile=${mobile}&otp=${otp}`,
+            };
+            request(options, function (error, response) {
+                if (error) {
+                    return res.status(200).json({
+                        status: false,
+                        data: error,
+                    });
+                } else {
+                    let processedData = JSON.parse(response.body);
+                    console.log(response.body);
 
-        return res.status(200).json({
-            status: true,
-            message: "Password reset successful",
-            // data: processedData.message,
-        });
+                    if (processedData.type == "error") {
+                        return res.status(400).json({
+                            status: false,
+                            message: "Invalid OTP",
+                        });
+                    } else {
+                        return res.status(200).json({
+                            status: true,
+                            message: "Password reset successful",
+                            // data: processedData.message,
+                        });
+                    }
+                }
+            });
+        }
+
     } catch (error) {
         console.error("Error in reset password:", error);
         return res.status(500).json({
