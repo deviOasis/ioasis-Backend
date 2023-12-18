@@ -97,14 +97,17 @@ exports.paymentVerification = async (req, res) => {
                 },
                 attributes: ['id']
             })
-            const updateIspaid = usersModel.update({
-                is_paid: 1
-            },
-                {
-                    where: {
-                        id: userId.id
-                    }
-                })
+            if (req.body.payload.payment.entity.status === 'captured') {
+                const updateIspaid = usersModel.update({
+                    is_paid: 1
+                },
+                    {
+                        where: {
+                            id: userId.id
+                        }
+                    })
+                console.log(updateIspaid)
+            }
             const update = await paymentsModel.update({
                 status: req.body.payload.payment.entity.status,
                 method: req.body.payload.payment.entity.method,
@@ -116,7 +119,6 @@ exports.paymentVerification = async (req, res) => {
                     }
                 })
             console.log(update)
-            console.log(updateIspaid)
         } else {
             console.log('request is not legit')
         }
