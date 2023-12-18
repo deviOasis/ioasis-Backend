@@ -80,6 +80,8 @@ exports.paymentVerification = async (req, res) => {
         const secret = 'stslBee/nIC3VI1w'
         console.log("aafter this");
         console.log(req.body.payload.payment.entity.status);
+        console.log(req.body.payload.payment.entity.method);
+        console.log(req.body.payload.payment.entity.id);
         console.log(req.body.payload.payment.entity.contact);
         const crypto = require('crypto');
         const shasum = crypto.createHmac('sha256', secret)
@@ -88,16 +90,23 @@ exports.paymentVerification = async (req, res) => {
         // console.log(digest, req.headers['x-razorpay-signature'])
         if (digest === req.headers['x-razorpay-signature']) {
             console.log('request is legit')
-            // const update = await paymentsModel.update({
-            //     status: req.body.payload.payment.entity.status,
-            //     method: req.body.payload.payment.entity.method,
-            //     transaction_id: req.body.payload.payment.entity.id,
-            // },
-            //     {
-            //         where: {
-
-            //         }
-            //     })
+            const userId = await usersModel.findOne({
+                where: {
+                    phone_number: req.body.payload.payment.entity.contact
+                },
+                attributes: ['id']
+            })
+            const update = await paymentsModel.update({
+                status: req.body.payload.payment.entity.status,
+                method: req.body.payload.payment.entity.method,
+                transaction_id: req.body.payload.payment.entity.id,
+            },
+                {
+                    where: {
+                        user_id: userId.id
+                    }
+                })
+            console.log(update)
         } else {
             console.log('request is not legit')
         }
