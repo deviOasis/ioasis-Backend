@@ -16,6 +16,7 @@ module.exports = (app) => {
     router.get("/getCourseMapping", courseMappingController.getCourseMapping)
     router.get("/getuserProfile", userProfileController.getUserProfile)
     router.post("/paymentVerification", paymentController.paymentVerification)
+    router.post("/updatePersonalDetails", loginController.updatePersonalDetails)
 
     app.use("/api/v1", router);
 };

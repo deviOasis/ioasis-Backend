@@ -304,3 +304,64 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
+
+exports.updatePersonalDetails = async (req, res) => {
+    try {
+        const { id, userName, fullName, phoneNumber, emailAddress, bio, gender, fatherName, motherName, schoolNameX, collegeName, alternatePhoneNumber, userAddress, district, city } = req.body;
+        // Check if the user exists
+        const user = await usersModel.findOne({
+            where: {
+                [Op.and]: [
+                    { id: id },
+                    { is_deleted: 0 },
+                ],
+            },
+        });
+        if (!user) {
+            return res.status(401).json({
+                status: false,
+                message: "User not found",
+            });
+        }
+        //update the user's details in the database
+        const updatedUser = await usersModel.update({
+            username: userName,
+            full_name: fullName,
+            phone_number: phoneNumber,
+            email_address: emailAddress,
+            bio: bio,
+            gender: gender,
+            father_name: fatherName,
+            mother_name: motherName,
+            tenth_school_name: schoolNameX,
+            college_name: collegeName,
+            alternate_phone_number: alternatePhoneNumber,
+            user_address: userAddress,
+            district: district,
+            city: city
+        }, {
+            where: {
+                id: id
+            }
+        })
+
+        if (updatedUser) {
+            return res.status(200).json({
+                status: true,
+                message: "User details updated successfully",
+            });
+        }
+        else {
+            return res.status(401).json({
+                status: false,
+                message: "User details not updated",
+            });
+        }
+    } catch (error) {
+        console.error("Error in onboarding info:", error);
+        return res.status(500).json({
+            status: false,
+            error: "Internal Server Error",
+        });
+    }
+}

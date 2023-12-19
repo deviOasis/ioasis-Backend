@@ -14,6 +14,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING(15),
             allowNull: true,
         },
+        alternate_phone_number: {
+            type: Sequelize.STRING(15),
+            allowNull: true,
+        },
         email_address: {
             type: Sequelize.STRING(255),
             allowNull: true,
@@ -99,6 +103,18 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING(255),
             allowNull: true,
         },
+        father_name: {
+            type: Sequelize.STRING(50),
+            allowNull: true,
+        },
+        mother_name: {
+            type: Sequelize.STRING(50),
+            allowNull: true,
+        },
+        college_name: {
+            type: Sequelize.STRING(50),
+            allowNull: true,
+        },
         is_deleted: {
             type: Sequelize.BOOLEAN,
             allowNull: true,
@@ -114,6 +130,11 @@ module.exports = (sequelize, Sequelize) => {
         referral_code: {
             type: Sequelize.STRING(20),
             allowNull: true,
+        },
+        referral_code_used: {
+            type: Sequelize.TINYINT(1),
+            allowNull: true,
+            defaultValue: 0,
         },
         course_type: {
             type: Sequelize.STRING(50),

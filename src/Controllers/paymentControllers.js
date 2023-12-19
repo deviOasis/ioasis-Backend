@@ -10,7 +10,7 @@ const razorpay = new Razorpay({
 });
 exports.payment = async (req, res) => {
     try {
-        const { userId, courseIds, isDemo } = req.body;
+        const { userId, courseIds, referralCode, isDemo } = req.body;
         if (isDemo) {
             const [updatedRowsCount] = await usersModel.update(
                 { demoTimestamp: new Date() },
@@ -33,41 +33,72 @@ exports.payment = async (req, res) => {
 
             // Calculate the total amount based on the number of courses
             const amount = courseIds.reduce((totalAmount, courseId) => totalAmount + 100, 0);
-
-            // Log input data for debugging
-            console.log('Course IDs:', courseIds);
-            console.log('Total Amount:', amount);
-
-            const payment_capture = 1;
-
-            // Create a Razorpay order
-            const options = {
-                amount: amount * 100, // Razorpay expects amount in paise
-                currency: currency,
-                receipt: shortid.generate(),
-                payment_capture: payment_capture,
-            };
-
-            const order = await razorpay.orders.create(options);
-            console.log('Razorpay Order:', order);
-
-            // Create a new payment entry in the database
-            const newPayment = {
-                user_id: userId,
-                order_id: order.id,
-                status: order.status,
-                amount: amount,
-                currency: currency,
-                receipt: order.receipt,
-            };
-
-            const createdPayment = await paymentsModel.create(newPayment);
-
-            res.status(200).json({
-                message: 'Payment processed successfully',
-                orderId: order.id,
-                amount: amount,
+            let discountAmount = amount;
+            const checkReferralCode = await usersModel.findOne({
+                where: {
+                    referral_code: referralCode
+                },
+                attributes: ['id', 'referral_code_used']
             });
+            console.log(checkReferralCode);
+            if (!checkReferralCode) {
+                res.status(500).json({
+                    message: 'Invalid referral code',
+                });
+            }
+            else if (checkReferralCode.dataValues.referral_code_used === 1) {
+                console.log("here");
+                res.status(500).json({
+                    message: 'Referral code already used',
+                });
+            }
+            else {
+                console.log("here2");
+                const [updatedRowsCount] = await usersModel.update(
+                    { referral_code_used: 1 },
+                    { where: { id: checkReferralCode.dataValues.id } }
+                );
+                console.log(updatedRowsCount);
+                discountAmount = amount - 10;
+
+
+
+                // Log input data for debugging
+                console.log('Course IDs:', courseIds);
+                console.log('Total Amount:', amount);
+
+                const payment_capture = 1;
+
+                // Create a Razorpay order
+                const options = {
+                    amount: discountAmount * 100, // Razorpay expects amount in paise
+                    currency: currency,
+                    receipt: shortid.generate(),
+                    payment_capture: payment_capture,
+                };
+
+                const order = await razorpay.orders.create(options);
+                console.log('Razorpay Order:', order);
+
+                // Create a new payment entry in the database
+                const newPayment = {
+                    user_id: userId,
+                    order_id: order.id,
+                    status: order.status,
+                    amount: amount,
+                    currency: currency,
+                    receipt: order.receipt,
+                };
+
+                const createdPayment = await paymentsModel.create(newPayment);
+
+                res.status(200).json({
+                    message: 'Payment processed successfully',
+                    orderId: order.id,
+                    originalamount: amount,
+                    discountamount: discountAmount,
+                });
+            }
         }
     } catch (error) {
         console.error('Error processing payment:', error);
