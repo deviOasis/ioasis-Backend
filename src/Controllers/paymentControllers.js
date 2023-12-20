@@ -30,7 +30,6 @@ exports.payment = async (req, res) => {
             }
         } else {
             const currency = 'INR';
-
             // Calculate the total amount based on the number of courses
             const amount = courseIds.reduce((totalAmount, courseId) => totalAmount + 100, 0);
             let discountAmount = amount;
@@ -41,12 +40,12 @@ exports.payment = async (req, res) => {
                 attributes: ['id', 'referral_code_used']
             });
             console.log(checkReferralCode);
-            if (!checkReferralCode) {
+            if (!checkReferralCode && req.body.referralCode !== "") {
                 res.status(500).json({
                     message: 'Invalid referral code',
                 });
             }
-            else if (checkReferralCode.dataValues.referral_code_used === 1) {
+            else if (checkReferralCode?.dataValues.referral_code_used === 1 && req.body.referralCode !== "") {
                 console.log("here");
                 res.status(500).json({
                     message: 'Referral code already used',
@@ -54,15 +53,14 @@ exports.payment = async (req, res) => {
             }
             else {
                 console.log("here2");
-                const [updatedRowsCount] = await usersModel.update(
-                    { referral_code_used: 1 },
-                    { where: { id: checkReferralCode.dataValues.id } }
-                );
-                console.log(updatedRowsCount);
-                discountAmount = amount - 10;
-
-
-
+                if (req.body.referralCode !== "") {
+                    const [updatedRowsCount] = await usersModel.update(
+                        { referral_code_used: 1 },
+                        { where: { id: checkReferralCode.dataValues.id } }
+                    );
+                    console.log(updatedRowsCount);
+                    discountAmount = amount - 10;
+                }
                 // Log input data for debugging
                 console.log('Course IDs:', courseIds);
                 console.log('Total Amount:', amount);
@@ -109,11 +107,11 @@ exports.payment = async (req, res) => {
 exports.paymentVerification = async (req, res) => {
     try {
         const secret = 'stslBee/nIC3VI1w'
-        console.log("aafter this");
-        console.log(req.body.payload.payment.entity.status);
-        console.log(req.body.payload.payment.entity.method);
-        console.log(req.body.payload.payment.entity.id);
-        console.log(req.body.payload.payment.entity.contact);
+        // console.log("aafter this");
+        // console.log(req.body.payload.payment.entity.status);
+        // console.log(req.body.payload.payment.entity.method);
+        // console.log(req.body.payload.payment.entity.id);
+        // console.log(req.body.payload.payment.entity.contact);
         const crypto = require('crypto');
         const shasum = crypto.createHmac('sha256', secret)
         shasum.update(JSON.stringify(req.body))
@@ -155,10 +153,7 @@ exports.paymentVerification = async (req, res) => {
         }
         res.json({ status: "ok" });
         // res.status(200);
-
-
     } catch (error) {
         console.log(error);
     }
 }
-
